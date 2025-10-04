@@ -1,0 +1,123 @@
+# ===========================================================
+# APS JobAppLLM Workflow Pipeline
+# Version: 1.0
+# Author: Dominic McGlinn
+# Description:
+#   End-to-end APS job application pipeline that automates
+#   resume alignment, application drafting, STAR interview
+#   simulation, and reflective analysis aligned with
+#   APSC frameworks and merit principles.
+# ===========================================================
+
+workflow:
+  name: APS JobAppLLM
+  description: >
+    Multi-agent LLM workflow for APS job applications. 
+    Executes Stages 1–5 sequentially using markdown prompts.
+  version: 1.0
+  entry_stage: stage5
+
+environment:
+  MODEL: gpt-5
+  DATA_PATH: ./outputs
+  REFERENCE_LIBRARY: ./library
+  ENABLE_LOGGING: true
+  MAX_TOKENS: 4000
+  TEMPERATURE: 0.3
+
+# -----------------------------------------------------------
+# Stage 1 – Job Alignment & Resume Optimiser
+# -----------------------------------------------------------
+stage1:
+  id: job_alignment
+  name: Job-Alignment & Resume Optimizer
+  prompt_file: ./stages/APS_JobAppLLM_Stage1.md
+  inputs:
+    - job_description
+    - resume_text
+    - linkedin_profile (optional)
+  outputs:
+    - ./outputs/Stage1_Output.txt
+  next: stage2
+
+# -----------------------------------------------------------
+# Stage 2 – Application Drafting
+# -----------------------------------------------------------
+stage2:
+  id: application_drafting
+  name: Application Drafting Agent
+  prompt_file: ./stages/APS_JobAppLLM_Stage2.md
+  inputs:
+    - ./outputs/Stage1_Output.txt
+  outputs:
+    - ./outputs/Stage2_Output.txt
+  next: stage2_5
+
+# -----------------------------------------------------------
+# Stage 2.5 – Handover
+# -----------------------------------------------------------
+stage2_5:
+  id: stage2_handover
+  name: Stage 2 Output Handover
+  prompt_file: ./stages/APS_JobAppLLM_Stage2_5.md
+  inputs:
+    - ./outputs/Stage2_Output.txt
+  outputs:
+    - ./outputs/Stage2_5_Output.txt
+  next: stage3
+
+# -----------------------------------------------------------
+# Stage 3 – STAR / Mock Interview
+# -----------------------------------------------------------
+stage3:
+  id: star_interview
+  name: STAR Response & Mock Interview Agent
+  prompt_file: ./stages/APS_JobAppLLM_Stage3.md
+  inputs:
+    - ./outputs/Stage2_5_Output.txt
+    - job_description
+  outputs:
+    - ./outputs/Stage3_Output_STAR.txt
+  next: stage4
+
+# -----------------------------------------------------------
+# Stage 4 – Interview Reflection & Alignment
+# -----------------------------------------------------------
+stage4:
+  id: interview_reflection
+  name: Interview Reflection & Alignment Agent
+  prompt_file: ./stages/APS_JobAppLLM_Stage4.md
+  inputs:
+    - interview_transcript
+    - panel_feedback (optional)
+    - job_description
+  outputs:
+    - ./outputs/Stage4_Reflection_Report.txt
+  next: stage5
+
+# -----------------------------------------------------------
+# Stage 5 – Multi-Agent Coordinator
+# -----------------------------------------------------------
+stage5:
+  id: coordinator
+  name: APS JobAppLLM Multi-Agent Coordinator
+  prompt_file: ./stages/APS_JobAppLLM_Stage5.md
+  inputs:
+    - ./outputs/Stage1_Output.txt
+    - ./outputs/Stage2_Output.txt
+    - ./outputs/Stage2_5_Output.txt
+    - ./outputs/Stage3_Output_STAR.txt
+    - ./outputs/Stage4_Reflection_Report.txt
+  outputs:
+    - ./outputs/APS_Learning_Development_Plan.txt
+  next: end
+
+# -----------------------------------------------------------
+# Completion
+# -----------------------------------------------------------
+end:
+  message: >
+    Workflow complete.  
+    All outputs have been generated in ./outputs/.  
+    Review APS_Learning_Development_Plan.txt for your final 
+    reflection and professional development summary.
